@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Good Dogs</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Good Dogs</h1>
+            <p>Look at these dogs and decide: Good dog or bad dog?</p>
+        </header>
+        
+        <main class="voting-area">
+            <div class="dog-container">
+                <img id="dog-image" src="/api/random-dog" alt="A dog" class="dog-photo">
+            </div>
+            
+            <div class="voting-buttons">
+                <button id="good-dog-btn" class="vote-btn good-btn">Good Dog! 🐕</button>
+                <button id="bad-dog-btn" class="vote-btn bad-btn">Bad Dog 😤</button>
+            </div>
+            
+            <button id="next-dog-btn" class="next-btn">Next Dog</button>
+        </main>
+    </div>
+
+    <!-- Popup Modal -->
+    <div id="popup-overlay" class="popup-overlay">
+        <div class="popup">
+            <h2>Actually...</h2>
+            <p>Yes, this is a good dog! 🎉</p>
+            <p>All dogs are good dogs!</p>
+            <button id="close-popup" class="close-btn">Of course! 🐾</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
