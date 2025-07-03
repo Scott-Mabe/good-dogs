@@ -4,9 +4,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const nextDogBtn = document.getElementById('next-dog-btn');
     const dogImage = document.getElementById('dog-image');
     const popupOverlay = document.getElementById('popup-overlay');
+    const popupMessage = document.getElementById('popup-message');
     const closePopupBtn = document.getElementById('close-popup');
 
-    function showPopup() {
+    function showPopup(message) {
+        popupMessage.textContent = message;
         popupOverlay.classList.add('show');
     }
 
@@ -19,11 +21,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function handleVote(isGoodDog) {
-        if (!isGoodDog) {
-            showPopup();
-        } else {
-            loadNextDog();
-        }
+        const message = isGoodDog ? 
+            'Correct this is a good dog.' : 
+            'Correct this is a Good Dog. All dogs are Good Dogs.';
+        
+        showPopup(message);
         
         fetch('/api/vote', {
             method: 'POST',
@@ -40,15 +42,11 @@ document.addEventListener('DOMContentLoaded', function() {
     goodDogBtn.addEventListener('click', () => handleVote(true));
     badDogBtn.addEventListener('click', () => handleVote(false));
     nextDogBtn.addEventListener('click', loadNextDog);
-    closePopupBtn.addEventListener('click', () => {
-        hidePopup();
-        loadNextDog();
-    });
+    closePopupBtn.addEventListener('click', hidePopup);
 
     popupOverlay.addEventListener('click', (e) => {
         if (e.target === popupOverlay) {
             hidePopup();
-            loadNextDog();
         }
     });
 
