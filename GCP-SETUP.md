@@ -16,7 +16,7 @@ export PROJECT_ID="your-project-id"
 gcloud config set project $PROJECT_ID
 
 # Create a VM instance
-gcloud compute instances create good-dogs-vm \
+gcloud compute instances create mabe-good-dogs \
     --zone=us-central1-a \
     --machine-type=e2-medium \
     --subnet=default \
@@ -27,6 +27,7 @@ gcloud compute instances create good-dogs-vm \
     --boot-disk-size=20GB \
     --boot-disk-type=pd-standard \
     --boot-disk-device-name=good-dogs-vm \
+    --tags=http-server,https-server \
     --tags=good-dogs-server
 ```
 
