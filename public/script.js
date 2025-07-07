@@ -1,7 +1,6 @@
 document.addEventListener('DOMContentLoaded', function() {
     const goodDogBtn = document.getElementById('good-dog-btn');
     const badDogBtn = document.getElementById('bad-dog-btn');
-    const nextDogBtn = document.getElementById('next-dog-btn');
     const dogImage = document.getElementById('dog-image');
     const popupOverlay = document.getElementById('popup-overlay');
     const popupMessage = document.getElementById('popup-message');
@@ -14,6 +13,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function hidePopup() {
         popupOverlay.classList.remove('show');
+        loadNextDog();
     }
 
     function loadNextDog() {
@@ -41,7 +41,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     goodDogBtn.addEventListener('click', () => handleVote(true));
     badDogBtn.addEventListener('click', () => handleVote(false));
-    nextDogBtn.addEventListener('click', loadNextDog);
     closePopupBtn.addEventListener('click', hidePopup);
 
     popupOverlay.addEventListener('click', (e) => {
