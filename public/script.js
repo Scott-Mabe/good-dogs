@@ -17,7 +17,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function loadNextDog() {
-        dogImage.src = `/api/random-dog?t=${Date.now()}`;
+        const randomNum = Math.floor(Math.random() * 10) + 1;
+        dogImage.src = `/images/dog${randomNum}.jpg?t=${Date.now()}`;
     }
 
     function handleVote(isGoodDog) {

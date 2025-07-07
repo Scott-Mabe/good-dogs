@@ -100,7 +100,22 @@ sudo apt install awscli -y
 sudo mkdir -p /var/www/good-dogs
 sudo chown ubuntu:ubuntu /var/www/good-dogs
 
-# Clone or upload your application files to /var/www/good-dogs
+# Copy application files to /var/www/good-dogs
+# Copy the following files from your project directory:
+cp package.json /var/www/good-dogs/
+cp package-lock.json /var/www/good-dogs/
+cp server.js /var/www/good-dogs/
+cp nginx.conf /var/www/good-dogs/
+
+# Copy the public directory and all its contents
+cp -r public/ /var/www/good-dogs/
+
+# This includes:
+# - public/index.html (main HTML file)
+# - public/script.js (frontend JavaScript)
+# - public/style.css (CSS styles)
+# - public/images/ (directory with all dog photos: dog1.jpg through dog10.jpg)
+
 cd /var/www/good-dogs
 
 # Install dependencies
