@@ -22,7 +22,7 @@ gcloud compute instances create mabe-good-dogs \
     --subnet=default \
     --network-tier=PREMIUM \
     --maintenance-policy=MIGRATE \
-    --image-family=ubuntu-2404-lts \
+    --image-family=ubuntu-2404-lts-amd64 \
     --image-project=ubuntu-os-cloud \
     --boot-disk-size=20GB \
     --boot-disk-type=pd-standard \
