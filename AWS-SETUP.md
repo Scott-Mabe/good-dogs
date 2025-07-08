@@ -148,14 +148,82 @@ sudo systemctl start good-dogs
 ## 5. Configure NGINX
 
 ```bash
-# Copy NGINX configuration
-sudo cp nginx.conf /etc/nginx/sites-available/good-dogs
+# Create proper NGINX configuration for main config file
+sudo tee /etc/nginx/nginx.conf > /dev/null <<EOF
+user www-data;
+worker_processes auto;
+error_log /var/log/nginx/error.log;
+pid /run/nginx.pid;
 
-# Create symbolic link to enable site
-sudo ln -s /etc/nginx/sites-available/good-dogs /etc/nginx/sites-enabled/
+events {
+    worker_connections 1024;
+}
 
-# Remove default NGINX site
-sudo rm /etc/nginx/sites-enabled/default
+http {
+    log_format main '\$remote_addr - \$remote_user [\$time_local] "\$request" '
+                    '\$status \$body_bytes_sent "\$http_referer" '
+                    '"\$http_user_agent" "\$http_x_forwarded_for"';
+
+    access_log /var/log/nginx/access.log main;
+
+    sendfile on;
+    tcp_nopush on;
+    tcp_nodelay on;
+    keepalive_timeout 65;
+    types_hash_max_size 2048;
+
+    include /etc/nginx/mime.types;
+    default_type application/octet-stream;
+
+    server {
+        listen 80;
+        server_name localhost;
+
+        location / {
+            proxy_pass http://localhost:3000;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade \$http_upgrade;
+            proxy_set_header Connection 'upgrade';
+            proxy_set_header Host \$host;
+            proxy_set_header X-Real-IP \$remote_addr;
+            proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto \$scheme;
+            proxy_cache_bypass \$http_upgrade;
+        }
+
+        location /health {
+            proxy_pass http://localhost:3000/health;
+            access_log off;
+        }
+
+        location ~* \.(css|js|jpg|jpeg|png|gif|ico|svg)\$ {
+            proxy_pass http://localhost:3000;
+            expires 1y;
+            add_header Cache-Control "public, immutable";
+        }
+
+        location /nginx_status {
+            stub_status on;
+            access_log off;
+            allow 127.0.0.1;
+            deny all;
+        }
+
+        gzip on;
+        gzip_vary on;
+        gzip_min_length 1024;
+        gzip_proxied expired no-cache no-store private auth;
+        gzip_types
+            text/plain
+            text/css
+            text/xml
+            text/javascript
+            application/javascript
+            application/xml+rss
+            application/json;
+    }
+}
+EOF
 
 # Test NGINX configuration
 sudo nginx -t
@@ -633,25 +701,15 @@ sudo systemctl daemon-reload
 sudo systemctl restart good-dogs
 ```
 
-## 12. Configure NGINX Status for Datadog
+## 12. Verify NGINX Status Endpoint
 
-Add NGINX status endpoint for monitoring:
+The NGINX status endpoint is already configured in the main configuration. Verify it's working:
 
 ```bash
-# Update NGINX configuration to include status endpoint
-sudo tee -a /etc/nginx/sites-available/good-dogs > /dev/null <<EOF
+# Test NGINX status endpoint
+curl http://localhost/nginx_status
 
-    location /nginx_status {
-        stub_status on;
-        access_log off;
-        allow 127.0.0.1;
-        deny all;
-    }
-EOF
-
-# Test and reload NGINX
-sudo nginx -t
-sudo systemctl reload nginx
+# Should return nginx status information
 ```
 
 ## 13. Environment Variables
