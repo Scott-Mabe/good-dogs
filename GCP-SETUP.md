@@ -147,17 +147,30 @@ sudo systemctl enable nginx
 
 ## 6. Configure Datadog Observability
 
-### 6.1 Install Datadog Agent
+### 6.1 Get Your Datadog API Key
+
+1. **Log in to your Datadog account** at https://app.datadoghq.com
+2. **Navigate to Organization Settings**:
+   - Click on your profile icon in the bottom left
+   - Select "Organization Settings"
+3. **Access API Keys**:
+   - Click on "API Keys" in the left sidebar
+   - Click "New Key" to create a new API key
+   - Give it a descriptive name like "Good Dogs GCP Production"
+   - Copy the generated API key (keep it secure!)
+
+### 6.2 Install Datadog Agent
 
 ```bash
-# Install Datadog agent (latest version)
+# Replace 'your_datadog_api_key' with your actual API key from step 6.1
 DD_API_KEY=your_datadog_api_key DD_SITE="datadoghq.com" DD_APM_INSTRUMENTATION_ENABLED=host DD_APM_INSTRUMENTATION_LIBRARIES=all bash -c "$(curl -L https://install.datadoghq.com/scripts/install_script_agent7.sh)"
 ```
 
-### 6.2 Configure Datadog Agent
+### 6.3 Configure Datadog Agent
 
 ```bash
 # Configure comprehensive Datadog monitoring
+# Replace 'your_datadog_api_key' with your actual API key from step 6.1
 sudo tee /etc/datadog-agent/datadog.yaml > /dev/null <<EOF
 api_key: your_datadog_api_key
 site: datadoghq.com
@@ -208,7 +221,7 @@ gcp:
 EOF
 ```
 
-### 6.3 Configure Log Collection
+### 6.4 Configure Log Collection
 
 ```bash
 # Create logs configuration directory
@@ -270,7 +283,7 @@ sudo chmod 755 /var/log/good-dogs
 sudo systemctl restart datadog-agent
 ```
 
-### 6.4 Configure Application Logging
+### 6.5 Configure Application Logging
 
 Update the systemd service to include proper logging:
 

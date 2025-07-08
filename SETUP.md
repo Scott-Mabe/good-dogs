@@ -81,17 +81,30 @@ sudo systemctl enable nginx
 
 ## 4. Configure Datadog Observability
 
-### 4.1 Install Datadog Agent
+### 4.1 Get Your Datadog API Key
+
+1. **Log in to your Datadog account** at https://app.datadoghq.com
+2. **Navigate to Organization Settings**:
+   - Click on your profile icon in the bottom left
+   - Select "Organization Settings"
+3. **Access API Keys**:
+   - Click on "API Keys" in the left sidebar
+   - Click "New Key" to create a new API key
+   - Give it a descriptive name like "Good Dogs Production"
+   - Copy the generated API key (keep it secure!)
+
+### 4.2 Install Datadog Agent
 
 ```bash
-# Install Datadog agent (latest version)
+# Replace 'your_datadog_api_key' with your actual API key from step 4.1
 DD_API_KEY=your_datadog_api_key DD_SITE="datadoghq.com" DD_APM_INSTRUMENTATION_ENABLED=host DD_APM_INSTRUMENTATION_LIBRARIES=all bash -c "$(curl -L https://install.datadoghq.com/scripts/install_script_agent7.sh)"
 ```
 
-### 4.2 Configure Datadog Agent
+### 4.3 Configure Datadog Agent
 
 ```bash
 # Configure comprehensive Datadog monitoring
+# Replace 'your_datadog_api_key' with your actual API key from step 4.1
 sudo tee /etc/datadog-agent/datadog.yaml > /dev/null <<EOF
 api_key: your_datadog_api_key
 site: datadoghq.com
@@ -136,7 +149,7 @@ live_process_collection:
 EOF
 ```
 
-### 4.3 Configure Log Collection
+### 4.4 Configure Log Collection
 
 ```bash
 # Create logs configuration directory
@@ -198,7 +211,7 @@ sudo chmod 755 /var/log/good-dogs
 sudo systemctl restart datadog-agent
 ```
 
-### 4.4 Configure Application Logging
+### 4.5 Configure Application Logging
 
 Update the systemd service to include proper logging:
 
@@ -256,8 +269,8 @@ Update `/var/www/good-dogs/public/index.html`:
   })(window,document,'script','https://www.datadoghq-browser-agent.com/us1/v5/datadog-rum.js','DD_RUM')
   
   window.DD_RUM && DD_RUM.init({
-    clientToken: 'your_rum_client_token',
-    applicationId: 'your_rum_application_id',
+    clientToken: 'your_rum_client_token', // Replace with your RUM client token from step 5.1
+    applicationId: 'your_rum_application_id', // Replace with your RUM application ID from step 5.1
     site: 'datadoghq.com',
     service: 'good-dogs',
     env: 'doggos',
@@ -287,8 +300,8 @@ DD_SERVICE=good-dogs
 DD_ENV=doggos
 DD_VERSION=1.5.0
 DD_LOGS_INJECTION=true
-RUM_CLIENT_TOKEN=your_rum_client_token
-RUM_APPLICATION_ID=your_rum_application_id
+RUM_CLIENT_TOKEN=your_rum_client_token  # Replace with your RUM client token
+RUM_APPLICATION_ID=your_rum_application_id  # Replace with your RUM application ID
 ```
 
 ## 7. Configure NGINX Status for Datadog

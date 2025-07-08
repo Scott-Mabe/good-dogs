@@ -240,9 +240,195 @@ aws s3api put-bucket-policy --bucket $BUCKET_NAME --policy '{
 }'
 ```
 
-## 8. Configure CloudWatch Monitoring
+## 8. Configure Datadog Observability
 
-### 8.1 Install CloudWatch Agent
+### 8.1 Get Your Datadog API Key
+
+1. **Log in to your Datadog account** at https://app.datadoghq.com
+2. **Navigate to Organization Settings**:
+   - Click on your profile icon in the bottom left
+   - Select "Organization Settings"
+3. **Access API Keys**:
+   - Click on "API Keys" in the left sidebar
+   - Click "New Key" to create a new API key
+   - Give it a descriptive name like "Good Dogs AWS Production"
+   - Copy the generated API key (keep it secure!)
+
+### 8.2 Install Datadog Agent
+
+```bash
+# Replace 'your_datadog_api_key' with your actual API key from step 8.1
+DD_API_KEY=your_datadog_api_key DD_SITE="datadoghq.com" DD_APM_INSTRUMENTATION_ENABLED=host DD_APM_INSTRUMENTATION_LIBRARIES=all bash -c "$(curl -L https://install.datadoghq.com/scripts/install_script_agent7.sh)"
+```
+
+### 8.3 Configure Datadog Agent
+
+```bash
+# Configure comprehensive Datadog monitoring
+# Replace 'your_datadog_api_key' with your actual API key from step 8.1
+sudo tee /etc/datadog-agent/datadog.yaml > /dev/null <<EOF
+api_key: your_datadog_api_key
+site: datadoghq.com
+hostname: good-dogs-aws-server
+tags:
+  - env:doggos
+  - service:good-dogs
+  - team:backend
+  - version:1.5.0
+  - cloud:aws
+  - region:$AWS_REGION
+
+# APM Configuration
+apm_config:
+  enabled: true
+  env: doggos
+  service: good-dogs
+  version: 1.5.0
+  
+# Process monitoring
+process_config:
+  enabled: true
+
+# Log collection
+logs_enabled: true
+logs_config:
+  container_collect_all: false
+  
+# System metrics and Universal Service Monitoring
+system_probe_config:
+  enabled: true
+  
+# Remote Configuration
+remote_configuration:
+  enabled: true
+
+# Container monitoring
+container_collection:
+  enabled: true
+
+# Live processes
+live_process_collection:
+  enabled: true
+
+# AWS integration
+aws:
+  region: $AWS_REGION
+EOF
+```
+
+### 8.4 Configure Log Collection
+
+```bash
+# Create logs configuration directory
+sudo mkdir -p /etc/datadog-agent/conf.d/
+
+# Configure application logs
+sudo tee /etc/datadog-agent/conf.d/good-dogs.d/conf.yaml > /dev/null <<EOF
+logs:
+  - type: file
+    path: "/var/log/good-dogs/*.log"
+    service: good-dogs
+    source: nodejs
+    tags:
+      - env:doggos
+      - cloud:aws
+      
+  - type: journald
+    path: /var/log/journal
+    source: systemd
+    service: good-dogs
+    include_units:
+      - good-dogs.service
+    tags:
+      - env:doggos
+      - cloud:aws
+EOF
+
+# Configure NGINX logs
+sudo tee /etc/datadog-agent/conf.d/nginx.d/conf.yaml > /dev/null <<EOF
+init_config:
+
+instances:
+  - nginx_status_url: http://localhost/nginx_status
+
+logs:
+  - type: file
+    path: /var/log/nginx/access.log
+    service: nginx
+    source: nginx
+    tags:
+      - env:doggos
+      - cloud:aws
+      
+  - type: file
+    path: /var/log/nginx/error.log
+    service: nginx
+    source: nginx
+    tags:
+      - env:doggos
+      - cloud:aws
+    log_processing_rules:
+      - type: multi_line
+        name: new_log_start_with_date
+        pattern: \d{4}\/\d{2}\/\d{2}
+EOF
+
+# Set proper permissions for log directories
+sudo mkdir -p /var/log/good-dogs
+sudo chown ubuntu:adm /var/log/good-dogs
+sudo chmod 755 /var/log/good-dogs
+
+# Restart Datadog agent
+sudo systemctl restart datadog-agent
+```
+
+### 8.5 Configure RUM (Real User Monitoring)
+
+#### 8.5.1 Create RUM Application in Datadog
+
+1. Go to Datadog RUM → Applications
+2. Click "New Application"
+3. Choose "Browser" as application type
+4. Name: "Good Dogs AWS"
+5. Copy the generated Application ID and Client Token
+
+#### 8.5.2 Add RUM to Frontend
+
+Update `/var/www/good-dogs/public/index.html`:
+
+```html
+<!-- Add before closing </head> tag -->
+<script>
+  (function(h,o,u,n,d) {
+     h=h[d]=h[d]||{q:[],onReady:function(c){h.q.push(c)}}
+     d=o.createElement(u);d.async=1;d.src=n
+     n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
+  })(window,document,'script','https://www.datadoghq-browser-agent.com/us1/v5/datadog-rum.js','DD_RUM')
+  
+  window.DD_RUM && DD_RUM.init({
+    clientToken: 'your_rum_client_token', // Replace with your RUM client token from step 8.5.1
+    applicationId: 'your_rum_application_id', // Replace with your RUM application ID from step 8.5.1
+    site: 'datadoghq.com',
+    service: 'good-dogs',
+    env: 'doggos',
+    version: '1.5.0',
+    sessionSampleRate: 100,
+    sessionReplaySampleRate: 20,
+    trackUserInteractions: true,
+    trackResources: true,
+    trackLongTasks: true,
+    trackFrustrations: true,
+    defaultPrivacyLevel: 'mask-user-input',
+    allowedTracingUrls: [
+      { match: window.location.origin, propagatorTypes: ['datadog'] }
+    ]
+  })
+</script>
+```
+
+## 9. Configure CloudWatch Monitoring
+
+### 9.1 Install CloudWatch Agent
 
 ```bash
 # Download and install CloudWatch agent (latest version)
@@ -335,7 +521,7 @@ sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \
     -s
 ```
 
-### 8.2 Create IAM Role for CloudWatch
+### 9.2 Create IAM Role for CloudWatch
 
 ```bash
 # Create IAM role for EC2 CloudWatch access
@@ -374,7 +560,7 @@ aws ec2 associate-iam-instance-profile \
     --iam-instance-profile Name=GoodDogsCloudWatchProfile
 ```
 
-## 9. Configure Auto Scaling (Optional)
+## 10. Configure Auto Scaling (Optional)
 
 ```bash
 # Create launch template
@@ -407,7 +593,7 @@ aws autoscaling create-auto-scaling-group \
     --availability-zones $(aws ec2 describe-availability-zones --query 'AvailabilityZones[*].ZoneName' --output text)
 ```
 
-## 10. Update Application Logging
+## 11. Update Application Logging
 
 Update the systemd service to include proper logging:
 
@@ -431,6 +617,10 @@ Restart=on-failure
 Environment=NODE_ENV=production
 Environment=PORT=3000
 Environment=AWS_REGION=$AWS_REGION
+Environment=DD_SERVICE=good-dogs
+Environment=DD_ENV=doggos
+Environment=DD_VERSION=1.5.0
+Environment=DD_LOGS_INJECTION=true
 StandardOutput=append:/var/log/good-dogs/app.log
 StandardError=append:/var/log/good-dogs/error.log
 
@@ -443,7 +633,44 @@ sudo systemctl daemon-reload
 sudo systemctl restart good-dogs
 ```
 
-## 11. Configure Route 53 (Optional)
+## 12. Configure NGINX Status for Datadog
+
+Add NGINX status endpoint for monitoring:
+
+```bash
+# Update NGINX configuration to include status endpoint
+sudo tee -a /etc/nginx/sites-available/good-dogs > /dev/null <<EOF
+
+    location /nginx_status {
+        stub_status on;
+        access_log off;
+        allow 127.0.0.1;
+        deny all;
+    }
+EOF
+
+# Test and reload NGINX
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
+## 13. Environment Variables
+
+Create `/var/www/good-dogs/.env`:
+
+```bash
+NODE_ENV=production
+PORT=3000
+AWS_REGION=$AWS_REGION
+DD_SERVICE=good-dogs
+DD_ENV=doggos
+DD_VERSION=1.5.0
+DD_LOGS_INJECTION=true
+RUM_CLIENT_TOKEN=your_rum_client_token  # Replace with your RUM client token
+RUM_APPLICATION_ID=your_rum_application_id  # Replace with your RUM application ID
+```
+
+## 14. Configure Route 53 (Optional)
 
 ```bash
 # Create hosted zone for your domain
@@ -478,7 +705,7 @@ aws route53 change-resource-record-sets \
     }'
 ```
 
-## 12. SSL Certificate with ACM (Optional)
+## 15. SSL Certificate with ACM (Optional)
 
 ```bash
 # Request SSL certificate
@@ -500,7 +727,7 @@ aws elbv2 create-listener \
     --default-actions Type=forward,TargetGroupArn=$TG_ARN
 ```
 
-## 13. Access Your Application
+## 16. Access Your Application
 
 ```bash
 # Get ALB DNS name
@@ -512,7 +739,7 @@ aws elbv2 describe-load-balancers \
 
 Visit the ALB DNS name in your browser to access the Good Dogs application.
 
-## 14. Monitoring and Troubleshooting
+## 17. Monitoring and Troubleshooting
 
 ```bash
 # View application logs
@@ -528,6 +755,15 @@ sudo systemctl status nginx
 
 # Test health endpoint
 curl http://localhost:3000/health
+
+# Check vote logs
+tail -f /var/www/good-dogs/votes.log
+
+# Check Datadog agent logs
+sudo tail -f /var/log/datadog/agent.log
+
+# Verify Datadog agent is collecting data
+sudo datadog-agent status
 
 # View CloudWatch logs
 aws logs describe-log-groups
