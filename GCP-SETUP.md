@@ -60,7 +60,7 @@ gcloud compute firewall-rules create allow-good-dogs-ssh \
 
 ```bash
 # SSH into the VM
-gcloud compute ssh good-dogs-vm --zone=us-central1-a
+gcloud compute ssh mabe-good-dogs --zone=us-central1-a
 
 # Update system packages
 sudo apt update && sudo apt upgrade -y
@@ -360,7 +360,7 @@ sudo datadog-agent status
 Get your VM's external IP:
 
 ```bash
-gcloud compute instances describe good-dogs-vm --zone=us-central1-a --format='get(networkInterfaces[0].accessConfigs[0].natIP)'
+gcloud compute instances describe mabe-good-dogs --zone=us-central1-a --format='get(networkInterfaces[0].accessConfigs[0].natIP)'
 ```
 
 Visit `http://YOUR_EXTERNAL_IP` to access the Good Dogs application.
