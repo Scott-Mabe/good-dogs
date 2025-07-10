@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  good-dogs:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DD_API_KEY=${DD_API_KEY}
+      - DD_RUM_APPLICATION_ID=${DD_RUM_APPLICATION_ID}
+      - DD_RUM_CLIENT_TOKEN=${DD_RUM_CLIENT_TOKEN}
+    volumes:
+      - ./votes.log:/usr/src/app/votes.log
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s

@@ -215,7 +215,25 @@ sudo systemctl enable nginx
 
 ## 6. Configure Datadog Observability
 
-### 6.1 Get Your Datadog API Key
+### 6.1 Environment Variables Setup
+
+Before configuring Datadog, you need to set up the required environment variables. Set these on your GCP VM:
+
+```bash
+# Set Datadog environment variables
+export DD_API_KEY=your_datadog_api_key
+export DD_RUM_APPLICATION_ID=your_rum_application_id
+export DD_RUM_CLIENT_TOKEN=your_rum_client_token
+
+# Or create a .env file for persistent configuration
+sudo tee /var/www/good-dogs/.env > /dev/null <<EOF
+DD_API_KEY=your_datadog_api_key
+DD_RUM_APPLICATION_ID=your_rum_application_id
+DD_RUM_CLIENT_TOKEN=your_rum_client_token
+EOF
+```
+
+### 6.2 Get Your Datadog API Key
 
 1. **Log in to your Datadog account** at https://app.datadoghq.com
 2. **Navigate to Organization Settings**:
@@ -227,20 +245,20 @@ sudo systemctl enable nginx
    - Give it a descriptive name like "Good Dogs GCP Production"
    - Copy the generated API key (keep it secure!)
 
-### 6.2 Install Datadog Agent
+### 6.3 Install Datadog Agent
 
 ```bash
-# Replace 'your_datadog_api_key' with your actual API key from step 6.1
-DD_API_KEY=your_datadog_api_key DD_SITE="datadoghq.com" DD_APM_INSTRUMENTATION_ENABLED=host DD_APM_INSTRUMENTATION_LIBRARIES=all bash -c "$(curl -L https://install.datadoghq.com/scripts/install_script_agent7.sh)"
+# Use the environment variable set in step 6.1
+DD_API_KEY=$DD_API_KEY DD_SITE="datadoghq.com" DD_APM_INSTRUMENTATION_ENABLED=host DD_APM_INSTRUMENTATION_LIBRARIES=all bash -c "$(curl -L https://install.datadoghq.com/scripts/install_script_agent7.sh)"
 ```
 
-### 6.3 Configure Datadog Agent
+### 6.4 Configure Datadog Agent
 
 ```bash
 # Configure comprehensive Datadog monitoring
-# Replace 'your_datadog_api_key' with your actual API key from step 6.1
+# Uses the environment variable set in step 6.1
 sudo tee /etc/datadog-agent/datadog.yaml > /dev/null <<EOF
-api_key: your_datadog_api_key
+api_key: $DD_API_KEY
 site: datadoghq.com
 hostname: good-dogs-vm
 tags:
@@ -289,7 +307,7 @@ gcp:
 EOF
 ```
 
-### 6.4 Configure Log Collection
+### 6.5 Configure Log Collection
 
 ```bash
 # Create logs configuration directory
@@ -351,7 +369,7 @@ sudo chmod 755 /var/log/good-dogs
 sudo systemctl restart datadog-agent
 ```
 
-### 6.5 Configure Application Logging
+### 6.6 Configure Application Logging
 
 Update the systemd service to include proper logging:
 
@@ -369,6 +387,9 @@ ExecStart=/usr/bin/node server.js
 Restart=on-failure
 Environment=NODE_ENV=production
 Environment=PORT=3000
+Environment=DD_API_KEY=your_datadog_api_key
+Environment=DD_RUM_APPLICATION_ID=your_rum_application_id
+Environment=DD_RUM_CLIENT_TOKEN=your_rum_client_token
 Environment=DD_SERVICE=good-dogs
 Environment=DD_ENV=doggos
 Environment=DD_VERSION=1.5.0
@@ -383,6 +404,50 @@ EOF
 # Reload systemd and restart service
 sudo systemctl daemon-reload
 sudo systemctl restart good-dogs
+```
+
+### 6.7 Configure RUM (Real User Monitoring)
+
+#### 6.7.1 Create RUM Application in Datadog
+
+1. Go to Datadog RUM → Applications
+2. Click "New Application"
+3. Choose "Browser" as application type
+4. Name: "Good Dogs GCP"
+5. Copy the generated Application ID and Client Token (these should match your environment variables from step 6.1)
+
+#### 6.7.2 Add RUM to Frontend
+
+Update `/var/www/good-dogs/public/index.html` to include RUM tracking:
+
+```html
+<!-- Add before closing </head> tag -->
+<script>
+  (function(h,o,u,n,d) {
+     h=h[d]=h[d]||{q:[],onReady:function(c){h.q.push(c)}}
+     d=o.createElement(u);d.async=1;d.src=n
+     n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
+  })(window,document,'script','https://www.datadoghq-browser-agent.com/us1/v5/datadog-rum.js','DD_RUM')
+  
+  window.DD_RUM && DD_RUM.init({
+    clientToken: '$DD_RUM_CLIENT_TOKEN', // Uses environment variable from step 6.1
+    applicationId: '$DD_RUM_APPLICATION_ID', // Uses environment variable from step 6.1
+    site: 'datadoghq.com',
+    service: 'good-dogs',
+    env: 'doggos',
+    version: '1.5.0',
+    sessionSampleRate: 100,
+    sessionReplaySampleRate: 20,
+    trackUserInteractions: true,
+    trackResources: true,
+    trackLongTasks: true,
+    trackFrustrations: true,
+    defaultPrivacyLevel: 'mask-user-input',
+    allowedTracingUrls: [
+      { match: window.location.origin, propagatorTypes: ['datadog'] }
+    ]
+  })
+</script>
 ```
 
 ## 7. Verify NGINX Status Endpoint

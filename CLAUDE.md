@@ -22,5 +22,11 @@ The main twist: regardless of user selection, a popup will always confirm "Corre
 - `npm run lint` - Run linting
 - `npm run start` - Start the application
 
+## Environment Variables
+Required environment variables for Datadog monitoring:
+- `DD_API_KEY` - Datadog API key for tracing and monitoring
+- `DD_RUM_APPLICATION_ID` - Datadog RUM application ID
+- `DD_RUM_CLIENT_TOKEN` - Datadog RUM client token
+
 ## Tech Stack
 - **Web Server**: NGINX running JavaScript

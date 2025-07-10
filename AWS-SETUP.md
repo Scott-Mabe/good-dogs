@@ -310,7 +310,25 @@ aws s3api put-bucket-policy --bucket $BUCKET_NAME --policy '{
 
 ## 8. Configure Datadog Observability
 
-### 8.1 Get Your Datadog API Key
+### 8.1 Environment Variables Setup
+
+Before configuring Datadog, you need to set up the required environment variables. Set these on your EC2 instance:
+
+```bash
+# Set Datadog environment variables
+export DD_API_KEY=your_datadog_api_key
+export DD_RUM_APPLICATION_ID=your_rum_application_id
+export DD_RUM_CLIENT_TOKEN=your_rum_client_token
+
+# Or create a .env file for persistent configuration
+sudo tee /var/www/good-dogs/.env > /dev/null <<EOF
+DD_API_KEY=your_datadog_api_key
+DD_RUM_APPLICATION_ID=your_rum_application_id
+DD_RUM_CLIENT_TOKEN=your_rum_client_token
+EOF
+```
+
+### 8.2 Get Your Datadog API Key
 
 1. **Log in to your Datadog account** at https://app.datadoghq.com
 2. **Navigate to Organization Settings**:
@@ -322,20 +340,20 @@ aws s3api put-bucket-policy --bucket $BUCKET_NAME --policy '{
    - Give it a descriptive name like "Good Dogs AWS Production"
    - Copy the generated API key (keep it secure!)
 
-### 8.2 Install Datadog Agent
+### 8.3 Install Datadog Agent
 
 ```bash
-# Replace 'your_datadog_api_key' with your actual API key from step 8.1
-DD_API_KEY=your_datadog_api_key DD_SITE="datadoghq.com" DD_APM_INSTRUMENTATION_ENABLED=host DD_APM_INSTRUMENTATION_LIBRARIES=all bash -c "$(curl -L https://install.datadoghq.com/scripts/install_script_agent7.sh)"
+# Use the environment variable set in step 8.1
+DD_API_KEY=$DD_API_KEY DD_SITE="datadoghq.com" DD_APM_INSTRUMENTATION_ENABLED=host DD_APM_INSTRUMENTATION_LIBRARIES=all bash -c "$(curl -L https://install.datadoghq.com/scripts/install_script_agent7.sh)"
 ```
 
-### 8.3 Configure Datadog Agent
+### 8.4 Configure Datadog Agent
 
 ```bash
 # Configure comprehensive Datadog monitoring
-# Replace 'your_datadog_api_key' with your actual API key from step 8.1
+# Uses the environment variable set in step 8.1
 sudo tee /etc/datadog-agent/datadog.yaml > /dev/null <<EOF
-api_key: your_datadog_api_key
+api_key: $DD_API_KEY
 site: datadoghq.com
 hostname: good-dogs-aws-server
 tags:
@@ -384,7 +402,7 @@ aws:
 EOF
 ```
 
-### 8.4 Configure Log Collection
+### 8.5 Configure Log Collection
 
 ```bash
 # Create logs configuration directory
@@ -450,9 +468,9 @@ sudo chmod 755 /var/log/good-dogs
 sudo systemctl restart datadog-agent
 ```
 
-### 8.5 Configure RUM (Real User Monitoring)
+### 8.6 Configure RUM (Real User Monitoring)
 
-#### 8.5.1 Create RUM Application in Datadog
+#### 8.6.1 Create RUM Application in Datadog
 
 1. Go to Datadog RUM → Applications
 2. Click "New Application"
@@ -460,7 +478,7 @@ sudo systemctl restart datadog-agent
 4. Name: "Good Dogs AWS"
 5. Copy the generated Application ID and Client Token
 
-#### 8.5.2 Add RUM to Frontend
+#### 8.6.2 Add RUM to Frontend
 
 Update `/var/www/good-dogs/public/index.html`:
 
@@ -474,8 +492,8 @@ Update `/var/www/good-dogs/public/index.html`:
   })(window,document,'script','https://www.datadoghq-browser-agent.com/us1/v5/datadog-rum.js','DD_RUM')
   
   window.DD_RUM && DD_RUM.init({
-    clientToken: 'your_rum_client_token', // Replace with your RUM client token from step 8.5.1
-    applicationId: 'your_rum_application_id', // Replace with your RUM application ID from step 8.5.1
+    clientToken: '$DD_RUM_CLIENT_TOKEN', // Uses environment variable from step 8.1
+    applicationId: '$DD_RUM_APPLICATION_ID', // Uses environment variable from step 8.1
     site: 'datadoghq.com',
     service: 'good-dogs',
     env: 'doggos',
@@ -685,6 +703,9 @@ Restart=on-failure
 Environment=NODE_ENV=production
 Environment=PORT=3000
 Environment=AWS_REGION=$AWS_REGION
+Environment=DD_API_KEY=your_datadog_api_key
+Environment=DD_RUM_APPLICATION_ID=your_rum_application_id
+Environment=DD_RUM_CLIENT_TOKEN=your_rum_client_token
 Environment=DD_SERVICE=good-dogs
 Environment=DD_ENV=doggos
 Environment=DD_VERSION=1.5.0
@@ -720,12 +741,13 @@ Create `/var/www/good-dogs/.env`:
 NODE_ENV=production
 PORT=3000
 AWS_REGION=$AWS_REGION
+DD_API_KEY=your_datadog_api_key
+DD_RUM_APPLICATION_ID=your_rum_application_id
+DD_RUM_CLIENT_TOKEN=your_rum_client_token
 DD_SERVICE=good-dogs
 DD_ENV=doggos
 DD_VERSION=1.5.0
 DD_LOGS_INJECTION=true
-RUM_CLIENT_TOKEN=your_rum_client_token  # Replace with your RUM client token
-RUM_APPLICATION_ID=your_rum_application_id  # Replace with your RUM application ID
 ```
 
 ## 14. Configure Route 53 (Optional)
