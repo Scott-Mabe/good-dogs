@@ -1,0 +1,26 @@
+# AWS Configuration
+aws_region        = "us-east-1"
+availability_zone = "us-east-1a"
+
+# Network Configuration
+vpc_cidr    = "10.0.0.0/16"
+subnet_cidr = "10.0.1.0/24"
+
+# Instance Configuration
+instance_type = "t3.micro"
+instance_name = "good-dogs-ec2"
+volume_size   = 20
+
+# SSH Configuration
+key_pair_name = "good-dogs-key"
+public_key    = "ssh-rsa AAAAB3NzaC1yc2E... your-public-key"
+
+
+# User Data Script (optional)
+user_data = <<-EOF
+#!/bin/bash
+apt update
+apt install -y nginx nodejs npm
+systemctl enable nginx
+systemctl start nginx
+EOF

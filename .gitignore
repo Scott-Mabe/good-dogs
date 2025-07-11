@@ -54,3 +54,10 @@ logs
 # Build outputs
 dist/
 build/
+
+# Terraform
+*.tfvars
+*.tfstate
+*.tfstate.backup
+.terraform/
+.terraform.lock.hcl

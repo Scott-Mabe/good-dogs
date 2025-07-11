@@ -1,0 +1,23 @@
+# GCP Configuration
+project_id = "your-gcp-project-id"
+region     = "us-central1"
+zone       = "us-central1-a"
+
+# Instance Configuration
+instance_name = "good-dogs-vm"
+machine_type  = "e2-micro"
+disk_size     = 20
+
+# SSH Configuration
+ssh_user       = "ubuntu"
+ssh_public_key = "ssh-rsa AAAAB3NzaC1yc2E... your-public-key"
+
+
+# Startup Script (optional)
+startup_script = <<-EOF
+#!/bin/bash
+apt update
+apt install -y nginx nodejs npm
+systemctl enable nginx
+systemctl start nginx
+EOF
