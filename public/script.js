@@ -6,9 +6,17 @@ document.addEventListener('DOMContentLoaded', function() {
     const popupMessage = document.getElementById('popup-message');
     const closePopupBtn = document.getElementById('close-popup');
 
+    // Accessibility: Close popup on Escape key
+    document.addEventListener('keydown', function(e) {
+        if (popupOverlay.classList.contains('show') && e.key === 'Escape') {
+            hidePopup();
+        }
+    });
+
     function showPopup(message) {
         popupMessage.textContent = message;
         popupOverlay.classList.add('show');
+        closePopupBtn.focus(); // Accessibility: focus close button
     }
 
     function hidePopup() {
@@ -16,18 +24,25 @@ document.addEventListener('DOMContentLoaded', function() {
         loadNextDog();
     }
 
+    // Preload next dog image for smoother transitions
+    let nextDogNum = Math.floor(Math.random() * 10) + 1;
+    let nextDogImg = new Image();
+    nextDogImg.src = `/images/dog${nextDogNum}.jpg`;
+
     function loadNextDog() {
-        const randomNum = Math.floor(Math.random() * 10) + 1;
-        dogImage.src = `/images/dog${randomNum}.jpg?t=${Date.now()}`;
+        // Use preloaded image if available
+        dogImage.src = `${nextDogImg.src}?t=${Date.now()}`;
+        // Preload the next image
+        nextDogNum = Math.floor(Math.random() * 10) + 1;
+        nextDogImg = new Image();
+        nextDogImg.src = `/images/dog${nextDogNum}.jpg`;
     }
 
     function handleVote(isGoodDog) {
         const message = isGoodDog ? 
-            'Correct this is a good dog.' : 
-            'Correct this is a Good Dog. All dogs are Good Dogs.';
-        
+            'Correct! This is a Good Dog.' : 
+            'Correct! This is a Good Dog. All dogs are Good Dogs.';
         showPopup(message);
-        
         fetch('/api/vote', {
             method: 'POST',
             headers: {
@@ -37,18 +52,23 @@ document.addEventListener('DOMContentLoaded', function() {
                 vote: isGoodDog ? 'good' : 'bad',
                 timestamp: new Date().toISOString()
             })
-        }).catch(err => console.log('Vote recording failed:', err));
+        }).catch(err => {
+            // User feedback on error
+            showPopup('Sorry, there was a problem recording your vote.');
+        });
     }
 
-    goodDogBtn.addEventListener('click', () => handleVote(true));
-    badDogBtn.addEventListener('click', () => handleVote(false));
-    closePopupBtn.addEventListener('click', hidePopup);
-
-    popupOverlay.addEventListener('click', (e) => {
-        if (e.target === popupOverlay) {
-            hidePopup();
-        }
-    });
+    // Robustness: Check elements before adding listeners
+    if (goodDogBtn) goodDogBtn.addEventListener('click', () => handleVote(true));
+    if (badDogBtn) badDogBtn.addEventListener('click', () => handleVote(false));
+    if (closePopupBtn) closePopupBtn.addEventListener('click', hidePopup);
+    if (popupOverlay) {
+        popupOverlay.addEventListener('click', (e) => {
+            if (e.target === popupOverlay) {
+                hidePopup();
+            }
+        });
+    }
 
     loadNextDog();
 });
